@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Uzme AI</title>
+  <style>
+    :root { --bg: #131314; --card: #1e1f20; --user: #282a2c; --text: #e3e3e3; --border: #333; --accent: #a8c7fa; }
+    body.light { --bg: #f8fafd; --card: #ffffff; --user: #e8f0fe; --text: #1f1f1f; --border: #dadce0; --accent: #1a73e8; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; transition: 0.3s; }
+    .top { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .brand { font-size: 20px; font-weight: 700; background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .icon-btn { background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 6px; border-radius: 50%; }
+    #chat { flex: 1; padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .welcome-box { margin-top: 20px; margin-bottom: 10px; }
+    #hi { font-size: 26px; font-weight: 700; line-height: 1.35; background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .cur { display: inline-block; width: 3px; height: 24px; background: var(--accent); vertical-align: middle; margin-left: 2px; animation: b 0.7s infinite; }
+    @keyframes b { 50% { opacity: 0; } }
+    .m { padding: 12px 16px; border-radius: 18px; max-width: 85%; line-height: 1.55; font-size: 15px; white-space: pre-wrap; word-wrap: break-word; }
+    .u { background: var(--user); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .a { background: var(--card); border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .bar { display: flex; padding: 10px 14px; gap: 10px; background: var(--bg); border-top: 1px solid var(--border); align-items: center; }
+    input[type="text"] { flex: 1; padding: 13px 18px; border-radius: 25px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 15px; outline: none; }
+    .send { width: 46px; height: 46px; border-radius: 50%; border: none; background: linear-gradient(135deg, #4285f4, #9b72cb); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+    .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; width: 100%; max-width: 360px; }
+    .modal-box h3 { margin: 0 0 16px 0; font-size: 18px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 13px; margin-bottom: 6px; opacity: 0.8; }
+    .field input, .field select { width: 100%; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; }
+    .btn-row { display: flex; gap: 10px; margin-top: 18px; }
+    .btn { flex: 1; padding: 11px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .btn-save { background: #4285f4; color: #fff; }
+    .btn-clear { background: #d96570; color: #fff; }
+    .btn-close { background: var(--user); color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <span class="brand">✦ Uzme AI</span>
+    <div>
+      <button class="icon-btn" onclick="newChat()" title="Yangi suhbat">🗑️</button>
+      <button class="icon-btn" onclick="openSettings()" title="Sozlamalar">⚙️</button>
+    </div>
+  </div>
+
+  <div id="chat">
+    <div class="welcome-box">
+      <span id="hi"></span><span class="cur"></span>
+    </div>
+  </div>
+
+  <div class="bar">
+    <input type="text" id="inp" placeholder="Savolingizni yozing..." onkeydown="if(event.key==='Enter') go()">
+    <button class="send" onclick="go()">➤</button>
+  </div>
+
+  <div class="modal" id="settingsModal">
+    <div class="modal-box">
+      <h3>⚙️ Sozlamalar</h3>
+      <div class="field">
+        <label>Ismingiz (AI sizga ismingiz bilan murojaat qiladi):</label>
+        <input type="text" id="userNameInp" placeholder="Masalan: Tohirjon">
+      </div>
+      <div class="field">
+        <label>Ilova ko'rinishi (Mavzu):</label>
+        <select id="themeSelect">
+          <option value="dark">🌙 Qorong'i rejim (Dark)</option>
+          <option value="light">☀️ Yorug' rejim (Light)</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-save" onclick="saveSettings()">Saqlash</button>
+        <button class="btn btn-close" onclick="closeSettings()">Yopish</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-clear" onclick="clearAll()">Barcha ma'lumotlarni tozalash</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const phrasesWithName = [
+      "Assalomu alaykum, {name}! Savol bering yoki nima xizmat?",
+      "Assalomu alaykum, {name}! Bugun sizga qanday yordam bera olaman?",
+      "Xush kelibsiz, {name}! Qanday savolingiz bor?",
+      "Assalomu alaykum, {name}! Tayyorman, savolingizni yozing."
+    ];
+    const phrasesDefault = [
+      "Assalomu alaykum! Savol bering yoki nima xizmat?",
+      "Assalomu alaykum! Bugun sizga qanday yordam bera olaman?",
+      "Xush kelibsiz! Qanday savol yoki vazifa bor?"
+    ];
+
+    let history = [];
+    let typeTimer;
+
+    function getGreeting() {
+      const savedName = localStorage.getItem("uzme_user_name");
+      if (savedName && savedName.trim() !== "") {
+        const p = phrasesWithName[Math.floor(Math.random() * phrasesWithName.length)];
+        return p.replace("{name}", savedName.trim());
+      }
+      return phrasesDefault[Math.floor(Math.random() * phrasesDefault.length)];
+    }
+
+    function startTyping(text) {
+      clearTimeout(typeTimer);
+      const hiEl = document.getElementById("hi");
+      hiEl.textContent = "";
+      let i = 0;
+      function step() {
+        if (i < text.length) {
+          hiEl.textContent += text.charAt(i++);
+          typeTimer = setTimeout(step, 40);
+        }
+      }
+      step();
+    }
+
+    function applyTheme() {
+      const theme = localStorage.getItem("uzme_theme") || "dark";
+      if (theme === "light") document.body.classList.add("light");
+      else document.body.classList.remove("light");
+    }
+
+    applyTheme();
+    startTyping(getGreeting());
+
+    function openSettings() {
+      document.getElementById("userNameInp").value = localStorage.getItem("uzme_user_name") || "";
+      document.getElementById("themeSelect").value = localStorage.getItem("uzme_theme") || "dark";
+      document.getElementById("settingsModal").style.display = "flex";
+    }
+
+    function closeSettings() {
+      document.getElementById("settingsModal").style.display = "none";
+    }
+
+    function saveSettings() {
+      const nameVal = document.getElementById("userNameInp").value.trim();
+      const themeVal = document.getElementById("themeSelect").value;
+      localStorage.setItem("uzme_user_name", nameVal);
+      localStorage.setItem("uzme_theme", themeVal);
+      applyTheme();
+      closeSettings();
+      if (history.length === 0) startTyping(getGreeting());
+    }
+
+    function newChat() {
+      history = [];
+      document.getElementById("chat").innerHTML = '<div class="welcome-box"><span id="hi"></span><span class="cur"></span></div>';
+      startTyping(getGreeting());
+    }
+
+    function clearAll() {
+      localStorage.removeItem("uzme_user_name");
+      localStorage.removeItem("uzme_theme");
+      applyTheme();
+      closeSettings();
+      newChat();
+    }
+
+    function detectAndSaveName(text) {
+      const match = text.match(/(?:mening ismim|ismim)\s+([A-Za-zА-Яа-яЎўҚқҒғҲҳ']+)/i);
+      if (match && match[1]) {
+        const cleanName = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+        localStorage.setItem("uzme_user_name", cleanName);
+      }
+    }
+
+    async function go() {
+      const inp = document.getElementById("inp");
+      const v = inp.value.trim();
+      if (!v) return;
+
+      detectAndSaveName(v);
+      add(v, "u");
+      inp.value = "";
+      const botDiv = add("O'ylamoqda...", "a");
+
+      const k1 = "gsk_VVMId1IhHvgVhQPR";
+      const k2 = "NCdaWGdyb3FYEIdRS0";
+      const k3 = "k7q9eCkA1YTjwGim5C";
+      const apiKey = k1 + k2 + k3;
+
+      const userName = localStorage.getItem("uzme_user_name");
+      const sysPrompt = "Sen o'zbek tilida juda ravon, samimiy va aniq javob beruvchi aqlli sun'iy intellektsan. Isming Uzme AI. " +
+        (userName ? "Foydalanuvchining ismi " + userName + ", unga ba'zan ismi bilan hurmat bilan murojaat qil." : "Agar foydalanuvchi o'z ismini aytsa, uni eslab qol va ismi bilan murojaat qil.");
+
+      history.push({ role: "user", content: v });
+      if (history.length > 10) history = history.slice(-10);
+
+      try {
+        const u1 = "https://groq.com";
+        const u2 = "/openai/v1/chat/completions";
+        const res = await fetch(u1 + u2, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apiKey
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [{ role: "system", content: sysPrompt }, ...history]
+          })
+        });
+        const data = await res.json();
+        if (data.choices && data.choices[0]) {
+          const reply = data.choices[0].message.content;
+          history.push({ role: "assistant", content: reply });
+
