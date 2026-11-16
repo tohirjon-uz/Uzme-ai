@@ -79,144 +79,161 @@
       </div>
     </div>
   </div>
+<script>
+  let history = [];
+  let typeTimer;
 
-  <script>
-    let history = [];
-    let typeTimer;
+  function getGreeting() {
+    const savedName = localStorage.getItem("uzme_user_name");
+    if (savedName && savedName.trim() !== "") {
+      return "Assalomu alaykum, " + savedName.trim() + "! Savol bering yoki nima xizmat?";
+    }
+    return "Assalomu alaykum! Savol bering yoki nima xizmat?";
+  }
 
-    function getGreeting() {
-      const savedName = localStorage.getItem("uzme_user_name");
-      if (savedName && savedName.trim() !== "") {
-        return "Assalomu alaykum, " + savedName.trim() + "! Savol bering yoki nima xizmat?";
+  function startTyping(text) {
+    clearTimeout(typeTimer);
+    const hiEl = document.getElementById("hi");
+    if (!hiEl) return;
+    hiEl.textContent = "";
+    let i = 0;
+    function step() {
+      if (i < text.length) {
+        hiEl.textContent += text.charAt(i++);
+        typeTimer = setTimeout(step, 40);
       }
-      return "Assalomu alaykum! Savol bering yoki nima xizmat?";
     }
+    step();
+  }
 
-    function startTyping(text) {
-      clearTimeout(typeTimer);
-      const hiEl = document.getElementById("hi");
-      hiEl.textContent = "";
-      let i = 0;
-      function step() {
-        if (i < text.length) {
-          hiEl.textContent += text.charAt(i++);
-          typeTimer = setTimeout(step, 40);
-        }
-      }
-      step();
-    }
+  function applyTheme() {
+    const theme = localStorage.getItem("uzme_theme") || "dark";
+    if (theme === "light") document.body.classList.add("light");
+    else document.body.classList.remove("light");
+  }
 
-    function applyTheme() {
-      const theme = localStorage.getItem("uzme_theme") || "dark";
-      if (theme === "light") document.body.classList.add("light");
-      else document.body.classList.remove("light");
-    }
+  applyTheme();
+  startTyping(getGreeting());
 
+  function openSettings() {
+    document.getElementById("userNameInp").value = localStorage.getItem("uzme_user_name") || "";
+    document.getElementById("themeSelect").value = localStorage.getItem("uzme_theme") || "dark";
+    document.getElementById("settingsModal").style.display = "flex";
+  }
+
+  function closeSettings() {
+    document.getElementById("settingsModal").style.display = "none";
+  }
+
+  function saveSettings() {
+    const nameVal = document.getElementById("userNameInp").value.trim();
+    const themeVal = document.getElementById("themeSelect").value;
+    localStorage.setItem("uzme_user_name", nameVal);
+    localStorage.setItem("uzme_theme", themeVal);
     applyTheme();
+    closeSettings();
+    if (history.length === 0) startTyping(getGreeting());
+  }
+
+  function newChat() {
+    history = [];
+    document.getElementById("chat").innerHTML = '<div class="welcome-box"><span id="hi"></span><span class="cur"></span></div>';
     startTyping(getGreeting());
+  }
 
-    function openSettings() {
-      document.getElementById("userNameInp").value = localStorage.getItem("uzme_user_name") || "";
-      document.getElementById("themeSelect").value = localStorage.getItem("uzme_theme") || "dark";
-      document.getElementById("settingsModal").style.display = "flex";
-    }
+  function clearAll() {
+    localStorage.removeItem("uzme_user_name");
+    localStorage.removeItem("uzme_theme");
+    applyTheme();
+    closeSettings();
+    newChat();
+  }
 
-    function closeSettings() {
-      document.getElementById("settingsModal").style.display = "none";
-    }
+  function add(text, cls) {
+    const chat = document.getElementById("chat");
+    const welcome = chat.querySelector(".welcome-box");
+    if (welcome) welcome.remove();
+    const div = document.createElement("div");
+    div.className = "m " + cls;
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+  }
 
-    function saveSettings() {
-      const nameVal = document.getElementById("userNameInp").value.trim();
-      const themeVal = document.getElementById("themeSelect").value;
-      localStorage.setItem("uzme_user_name", nameVal);
-      localStorage.setItem("uzme_theme", themeVal);
-      applyTheme();
-      closeSettings();
-      if (history.length === 0) startTyping(getGreeting());
-    }
+  async function go() {
+    const inp = document.getElementById("inp");
+    const v = inp.value.trim();
+    if (!v) return;
 
-    function newChat() {
-      history = [];
-      document.getElementById("chat").innerHTML = '<div class="welcome-box"><span id="hi"></span><span class="cur"></span></div>';
-      startTyping(getGreeting());
-    }
-
-    function clearAll() {
-      localStorage.removeItem("uzme_user_name");
-      localStorage.removeItem("uzme_theme");
-      applyTheme();
-      closeSettings();
-      newChat();
-    }
-
-    async function go() {
-      const inp = document.getElementById("inp");
-      const v = inp.value.trim();
-      if (!v) return;
-
-      const lower = v.toLowerCase();
-      if (lower.includes("ismim ")) {
-        const parts = v.split(/ismim\s+/i);
-        if (parts[1]) {
-          const cleanName = parts[1].split(/[\s,.!?]/)[0];
-          if (cleanName) {
-            localStorage.setItem("uzme_user_name", cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
-          }
+    const lower = v.toLowerCase();
+    if (lower.includes("ismim ")) {
+      const parts = v.split(/ismim\s+/i);
+      if (parts[1]) {
+        const cleanName = parts[1].split(/[\s,.!?]/)[0];
+        if (cleanName) {
+          localStorage.setItem("uzme_user_name", cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
         }
       }
-
-      add(v, "u");
-      inp.value = "";
-      const botDiv = add("O'ylamoqda...", "a");
-
-      const k1 = "gsk_VVMId1IhHvgVhQPR";
-      const k2 = "NCdaWGdyb3FYEIdRS0";
-      const k3 = "k7q9eCkA1YTjwGim5C";
-      const apiKey = k1 + k2 + k3;
-
-      const userName = localStorage.getItem("uzme_user_name");
-      const sysPrompt = "Sen o'zbek tilida juda ravon, samimiy va aniq javob beruvchi aqlli sun'iy intellektsan. Isming Uzme AI. " +
-        (userName ? "Foydalanuvchining ismi " + userName + ", unga hurmat bilan murojaat qil." : "Agar foydalanuvchi ismini aytsa, uni eslab qol.");
-
-      history.push({ role: "user", content: v });
-      if (history.length > 10) history = history.slice(-10);
-
-      try {
-        const u1 = "https://groq.com";
-        const u2 = "/openai/v1/chat/completions";
-        const res = await fetch(u1 + u2, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + apiKey
-          },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            messages: [{ role: "system", content: sysPrompt }, ...history]
-          })
-        });
-        const data = await res.json();
-        if (data.choices && data.choices[0]) {
-          const reply = data.choices[0].message.content;
-          history.push({ role: "assistant", content: reply });
-          botDiv.textContent = "";
-          typeReply(botDiv, reply);
-        } else {
-          botDiv.textContent = "Xatolik: " + (data.error ? data.error.message : "Javob olinmadi.");
-        }
-      } catch (e) {
-        botDiv.textContent = "Internet bilan bog'lanishda xatolik yuz berdi.";
-      }
     }
 
-    function typeReply(el, text) {
-      let idx = 0;
-      function step() {
-        if (idx < text.length) {
-          el.textContent += text.charAt(idx++);
-          const ch = document.getElementById("chat");
-          ch.scrollTop = ch.scrollHeight;
-          setTimeout(step, 12);
-        }
+    add(v, "u");
+    inp.value = "";
+    const botDiv = add("O'ylanmoqda...", "a");
+
+    const k1 = "gsk_VVMidIThHmvghQPR";
+    const k2 = "NCdawGdyb3FYFtdR5O";
+    const k3 = "k7q9eCkA1YtjWGm5C";
+    const apiKey = k1 + k2 + k3;
+
+    const userName = localStorage.getItem("uzme_user_name");
+    const sysPrompt = "Sen o'zbek tilida juda ravon, samimiy va aniq javob beruvchi aqlli sun'iy intellektsan. Isming Uzme AI. " +
+      (userName ? "Foydalanuvchining ismi " + userName + ", unga hurmat bilan murojaat qil." : "");
+
+    history.push({ role: "user", content: v });
+    if (history.length > 10) history = history.slice(-10);
+
+    try {
+      const u1 = "https://api.groq.com"
+      const u2 = "/openai/v1/chat/completions";
+      const res = await fetch(u1 + u2, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + apiKey
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "system", content: sysPrompt }, ...history]
+        })
+      });
+
+      const data = await res.json();
+      if (data.choices && data.choices[0]) {
+        const reply = data.choices[0].message.content;
+        history.push({ role: "assistant", content: reply });
+        botDiv.textContent = "";
+        typeReply(botDiv, reply);
+      } else {
+        botDiv.textContent = "Xatolik: " + (data.error ? data.error.message : "Javob olinmadi.");
       }
-      step();
+    } catch (e) {
+      botDiv.textContent = "Internet bilan bog'lanishda xatolik yuz berdi.";
+    }
+  }
+
+  function typeReply(el, text) {
+    let idx = 0;
+    function step() {
+      if (idx < text.length) {
+        el.textContent += text.charAt(idx++);
+        const ch = document.getElementById("chat");
+        ch.scrollTop = ch.scrollHeight;
+        setTimeout(step, 12);
+      }
+    }
+    step();
+  }
+</script>
+</body>
+</html>
