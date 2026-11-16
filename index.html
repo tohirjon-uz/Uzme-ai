@@ -57,28 +57,33 @@
   </div>
 
   <div class="modal" id="settingsModal">
-    <div class="modal-box">
-      <h3>⚙️ Sozlamalar</h3>
-      <div class="field">
-        <label>Ismingiz (AI sizga ismingiz bilan murojaat qiladi):</label>
-        <input type="text" id="userNameInp" placeholder="Masalan: Tohirjon">
-      </div>
-      <div class="field">
-        <label>Ilova ko'rinishi (Mavzu):</label>
-        <select id="themeSelect">
-          <option value="dark">🌙 Qorong'i rejim (Dark)</option>
-          <option value="light">☀️ Yorug' rejim (Light)</option>
-        </select>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-save" onclick="saveSettings()">Saqlash</button>
-        <button class="btn btn-close" onclick="closeSettings()">Yopish</button>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-clear" onclick="clearAll()">Barcha ma'lumotlarni tozalash</button>
-      </div>
+      <div class="modal-box">
+    <h3>⚙️ Sozlamalar</h3>
+    <div class="field">
+      <label>Groq API kaliti:</label>
+      <input type="password" id="apiKeyInp" placeholder="gsk_...">
+    </div>
+    <div class="field">
+      <label>Ismingiz (AI sizga ismingiz bilan murojaat qiladi):</label>
+      <input type="text" id="userNameInp" placeholder="Masalan: Tohirjon">
+    </div>
+    <div class="field">
+      <label>Ilova ko'rinishi (Mavzu):</label>
+      <select id="themeSelect">
+        <option value="dark">🌙 Qorong'i rejim (Dark)</option>
+        <option value="light">☀️ Yorug' rejim (Light)</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-save" onclick="saveSettings()">Saqlash</button>
+      <button class="btn btn-close" onclick="closeSettings()">Yopish</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-clear" onclick="clearAll()">Barcha ma'lumotlarni tozalash</button>
     </div>
   </div>
+</div>
+
 <script>
   let history = [];
   let typeTimer;
@@ -116,6 +121,7 @@
   startTyping(getGreeting());
 
   function openSettings() {
+    document.getElementById("apiKeyInp").value = localStorage.getItem("uzme_api_key") || "";
     document.getElementById("userNameInp").value = localStorage.getItem("uzme_user_name") || "";
     document.getElementById("themeSelect").value = localStorage.getItem("uzme_theme") || "dark";
     document.getElementById("settingsModal").style.display = "flex";
@@ -126,8 +132,10 @@
   }
 
   function saveSettings() {
+    const keyVal = document.getElementById("apiKeyInp").value.trim();
     const nameVal = document.getElementById("userNameInp").value.trim();
     const themeVal = document.getElementById("themeSelect").value;
+    localStorage.setItem("uzme_api_key", keyVal);
     localStorage.setItem("uzme_user_name", nameVal);
     localStorage.setItem("uzme_theme", themeVal);
     applyTheme();
@@ -142,6 +150,7 @@
   }
 
   function clearAll() {
+    localStorage.removeItem("uzme_api_key");
     localStorage.removeItem("uzme_user_name");
     localStorage.removeItem("uzme_theme");
     applyTheme();
@@ -166,10 +175,16 @@
     const v = inp.value.trim();
     if (!v) return;
 
+    const apiKey = localStorage.getItem("uzme_api_key");
+    if (!apiKey) {
+      add("Iltimos, avval yuqori o'ng burchakdagi Sozlamalar (⚙️) tugmasini bosib, Groq API kalitingizni kiriting!", "a");
+      return;
+    }
+
     const lower = v.toLowerCase();
     if (lower.includes("ismim ")) {
       const parts = v.split(/ismim\s+/i);
-      if (parts[1]) {
+      if (parts && parts[1]) {
         const cleanName = parts[1].split(/[\s,.!?]/)[0];
         if (cleanName) {
           localStorage.setItem("uzme_user_name", cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
@@ -181,11 +196,6 @@
     inp.value = "";
     const botDiv = add("O'ylanmoqda...", "a");
 
-    const k1 = "gsk_VVMidIThHmvghQPR";
-    const k2 = "NCdawGdyb3FYFtdR5O";
-    const k3 = "k7q9eCkA1YtjWGm5C";
-    const apiKey = k1 + k2 + k3;
-
     const userName = localStorage.getItem("uzme_user_name");
     const sysPrompt = "Sen o'zbek tilida juda ravon, samimiy va aniq javob beruvchi aqlli sun'iy intellektsan. Isming Uzme AI. " +
       (userName ? "Foydalanuvchining ismi " + userName + ", unga hurmat bilan murojaat qil." : "");
@@ -194,9 +204,7 @@
     if (history.length > 10) history = history.slice(-10);
 
     try {
-      const u1 = "https://api.groq.com"
-      const u2 = "/openai/v1/chat/completions";
-      const res = await fetch(u1 + u2, {
+      const res = await fetch("https://groq.com", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
